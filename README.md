@@ -11,7 +11,7 @@ Rate limiter configurável por IP ou Token, usando Redis como backend, pronto pa
 - Fácil trocar Redis por outro backend implementando a interface `LimiterStore`
 
 ## Configuração
-Veja o arquivo `.env.example`:
+Veja o arquivo `.env.`:
 
 ```
 RATE_LIMIT_IP=10
