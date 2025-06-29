@@ -3,10 +3,13 @@ package middleware
 import (
 	"net/http"
 	"strings"
+	"net"
+	"fmt"
+	"time"
 )
 
 type Limiter interface {
-	Check(ip, token string) (bool, int64)
+	Check(ip, token string) (bool, time.Duration)
 }
 
 func LimiterMiddleware(lim Limiter) func(http.Handler) http.Handler {
@@ -15,7 +18,7 @@ func LimiterMiddleware(lim Limiter) func(http.Handler) http.Handler {
 			// Extrai IP real do header X-Forwarded-For, se existir
 			ip := r.Header.Get("X-Forwarded-For")
 			if ip == "" {
-				ip = r.RemoteAddr
+				ip, _, _ = net.SplitHostPort(r.RemoteAddr)
 			} else {
 				// Pode conter múltiplos IPs, pega o primeiro
 				ip = strings.Split(ip, ",")[0]
@@ -23,6 +26,9 @@ func LimiterMiddleware(lim Limiter) func(http.Handler) http.Handler {
 			token := r.Header.Get("API_KEY")
 			allowed, blockTime := lim.Check(ip, token)
 			if !allowed {
+				if blockTime > 0 {
+					w.Header().Set("Retry-After", fmt.Sprintf("%d", int(blockTime.Seconds())))
+				}
 				w.WriteHeader(429)
 				w.Write([]byte("you have reached the maximum number of requests or actions allowed within a certain time frame"))
 				return

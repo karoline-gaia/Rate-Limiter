@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/joho/godotenv"
 
@@ -20,7 +19,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("Erro ao conectar ao Redis: %v", err)
 	}
-	lim := limiter.NewLimiter(store, cfg)
+	limiterCfg := limiter.LimiterConfig{
+		RateLimitIP:        cfg.RateLimitIP,
+		BlockDurationIP:    cfg.BlockDurationIP,
+		RateLimitToken:     cfg.RateLimitToken,
+		BlockDurationToken: cfg.BlockDurationToken,
+	}
+	lim := limiter.NewLimiter(store, limiterCfg)
 	limiterMw := middleware.LimiterMiddleware(lim)
 
 	http.Handle("/", limiterMw(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -1,7 +1,6 @@
 package limiter
 
 import (
-	"net/http"
 	"time"
 )
 
